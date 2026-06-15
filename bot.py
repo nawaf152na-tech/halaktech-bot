@@ -3,9 +3,8 @@ import requests
 
 app = Flask(__name__)
 
-# 🔴 حط بياناتك هنا مباشرة (للتجربة فقط)
-TOKEN = "PUT_YOUR_TOKEN_HERE"
-ADMIN_ID = 123456789
+TOKEN = "8460466817:AAEFLm0S11ysyR_oR-oCQB8KuFaYlkQGNf0"  # 🔐 حطه هنا
+ADMIN_ID = 970041902  # 🔐 حط رقمك الحقيقي
 
 API = f"https://api.telegram.org/bot{TOKEN}"
 
@@ -17,21 +16,23 @@ def home():
 def webhook():
     data = request.get_json()
 
-    if "message" in data:
-        chat_id = data["message"]["chat"]["id"]
-        text = data["message"].get("text", "")
+    if not data or "message" not in data:
+        return "ok"
 
-        # رد للعميل
-        requests.post(API + "/sendMessage", json={
-            "chat_id": chat_id,
-            "text": "تم استلام رسالتك 👍"
-        })
+    chat_id = data["message"]["chat"]["id"]
+    text = data["message"].get("text", "")
 
-        # رسالة لك
-        requests.post(API + "/sendMessage", json={
-            "chat_id": ADMIN_ID,
-            "text": f"رسالة جديدة:\n{text}"
-        })
+    # رد للعميل
+    requests.post(API + "/sendMessage", json={
+        "chat_id": chat_id,
+        "text": "✅ تم استلام رسالتك وسيتم الرد قريبًا"
+    })
+
+    # إرسال للأدمن
+    requests.post(API + "/sendMessage", json={
+        "chat_id": ADMIN_ID,
+        "text": f"📩 رسالة جديدة:\n{text}"
+    })
 
     return "ok"
 
