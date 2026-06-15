@@ -1,10 +1,12 @@
 from flask import Flask, request
 import requests
+import os
 
 app = Flask(__name__)
 
-TOKEN = "8460466817:AAEFLm0S11ysyR_oR-oCQB8KuFaYlkQGNf0"  # 🔐 حطه هنا
-ADMIN_ID = 970041902  # 🔐 حط رقمك الحقيقي
+# 🔐 القيم من Render (بدون تعديل الكود)
+TOKEN = os.getenv("TOKEN", "")
+ADMIN_ID = int(os.getenv("ADMIN_ID", "0"))
 
 API = f"https://api.telegram.org/bot{TOKEN}"
 
@@ -12,6 +14,7 @@ API = f"https://api.telegram.org/bot{TOKEN}"
 def home():
     return "Bot is running"
 
+# ✅ Webhook ثابت (بدون مشاكل)
 @app.route("/webhook", methods=["POST"])
 def webhook():
     data = request.get_json()
@@ -22,19 +25,20 @@ def webhook():
     chat_id = data["message"]["chat"]["id"]
     text = data["message"].get("text", "")
 
-    # رد للعميل
+    # 🤖 رد تلقائي للعميل
     requests.post(API + "/sendMessage", json={
         "chat_id": chat_id,
-        "text": "✅ تم استلام رسالتك وسيتم الرد قريبًا"
+        "text": "✅ تم استلام رسالتك، وسيتم الرد عليك قريبًا من فريق Halak Tech Digital"
     })
 
-    # إرسال للأدمن
+    # 📩 إرسال لك أنت
     requests.post(API + "/sendMessage", json={
         "chat_id": ADMIN_ID,
-        "text": f"📩 رسالة جديدة:\n{text}"
+        "text": f"📩 رسالة جديدة:\n\n{text}"
     })
 
     return "ok"
+
 
 if __name__ == "__main__":
     app.run(host="0.0.0.0", port=10000)
