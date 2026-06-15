@@ -4,8 +4,9 @@ import requests
 
 app = Flask(__name__)
 
-TOKEN = os.getenv("TOKEN")
-ADMIN_ID = os.getenv("ADMIN_ID")
+# 🔐 القيم من Render
+TOKEN = os.getenv("TOKEN", "")
+ADMIN_ID = int(os.getenv("ADMIN_ID", "0"))
 
 TELEGRAM_API = f"https://api.telegram.org/bot{TOKEN}"
 
@@ -13,9 +14,13 @@ TELEGRAM_API = f"https://api.telegram.org/bot{TOKEN}"
 def home():
     return "Bot is running"
 
-@app.route(f"/webhook/{TOKEN}", methods=["POST"])
+# 🚀 Webhook ثابت (بدون توكن في الرابط)
+@app.route("/webhook", methods=["POST"])
 def webhook():
     data = request.get_json()
+
+    if not data:
+        return "no data"
 
     if "message" in data:
         chat_id = data["message"]["chat"]["id"]
@@ -27,7 +32,7 @@ def webhook():
             "text": "✅ تم استلام رسالتك وسيتم الرد عليك قريبًا من فريق Halak Tech Digital"
         })
 
-        # إرسال لك
+        # إرسال للأدمن
         requests.post(f"{TELEGRAM_API}/sendMessage", json={
             "chat_id": ADMIN_ID,
             "text": f"📩 رسالة جديدة:\n\n{text}"
