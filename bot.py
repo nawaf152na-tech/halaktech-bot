@@ -1,44 +1,32 @@
-from flask import Flask, request
-import requests
 import os
+from telegram import Update
+from telegram.ext import ApplicationBuilder, CommandHandler, MessageHandler, ContextTypes, filters
 
-app = Flask(__name__)
+TOKEN = os.getenv("TOKEN")
+ADMIN_ID = int(os.getenv("ADMIN_ID"))
 
-# 🔐 القيم من Render (بدون تعديل الكود)
-TOKEN = os.getenv("TOKEN", "")
-ADMIN_ID = int(os.getenv("ADMIN_ID", "0"))
+async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    await update.message.reply_text("أهلاً بك 👋 أرسل رسالتك وسيتم الرد عليك")
 
-API = f"https://api.telegram.org/bot{TOKEN}"
+async def handle(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    user = update.message.from_user
 
-@app.route("/")
-def home():
-    return "Bot is running"
+    msg = f"""رسالة جديدة:
+الاسم: {user.first_name}
+اليوزر: @{user.username}
+ID: {user.id}
 
-# ✅ Webhook ثابت (بدون مشاكل)
-@app.route("/webhook", methods=["POST"])
-def webhook():
-    data = request.get_json()
+الرسالة:
+{update.message.text}"""
 
-    if not data or "message" not in data:
-        return "ok"
+    await context.bot.send_message(chat_id=ADMIN_ID, text=msg)
 
-    chat_id = data["message"]["chat"]["id"]
-    text = data["message"].get("text", "")
+    await update.message.reply_text("تم استلام رسالتك ✅")
 
-    # 🤖 رد تلقائي للعميل
-    requests.post(API + "/sendMessage", json={
-        "chat_id": chat_id,
-        "text": "✅ تم استلام رسالتك، وسيتم الرد عليك قريبًا من فريق Halak Tech Digital"
-    })
+app = ApplicationBuilder().token(TOKEN).build()
 
-    # 📩 إرسال لك أنت
-    requests.post(API + "/sendMessage", json={
-        "chat_id": ADMIN_ID,
-        "text": f"📩 رسالة جديدة:\n\n{text}"
-    })
+app.add_handler(CommandHandler("start", start))
+app.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, handle))
 
-    return "ok"
-
-
-if __name__ == "__main__":
-    app.run(host="0.0.0.0", port=10000)
+print("Bot running...")
+app.run_polling()
